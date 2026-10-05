@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launch theme; Compose draws the real light/dark scheme once the activity starts. -->
+    <style name="Theme.Tune" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/tune_window_background</item>
+    </style>
+</resources>
