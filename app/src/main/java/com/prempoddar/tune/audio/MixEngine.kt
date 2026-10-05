@@ -84,7 +84,8 @@ class MixEngine(
     private val _state = MutableStateFlow(EngineState())
     val state: StateFlow<EngineState> = _state.asStateFlow()
 
-    private var settings = TuneSettings()
+    var settings = TuneSettings()
+        private set
     private val firstSeen = mutableMapOf<String, Long>()
     private var lastApplied: MixPlan? = null
     private var runJob: Job? = null

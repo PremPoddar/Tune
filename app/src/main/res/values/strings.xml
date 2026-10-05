@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Tune</string>
+    <string name="accessibility_summary">Gives each app its own volume</string>
+    <string name="accessibility_description">Tune uses this to know which app is on screen, so it can switch to that app\'s volume, and to show its own volume panel when you press the volume buttons. Tune does not read anything on your screen and does not collect or send any data.</string>
+    <string name="tile_label">Tune</string>
+    <string name="widget_description">Volume for the app you\'re using</string>
 </resources>
