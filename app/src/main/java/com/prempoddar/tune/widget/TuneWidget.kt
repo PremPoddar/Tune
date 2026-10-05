@@ -2,6 +2,8 @@ package com.prempoddar.tune.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -53,7 +55,7 @@ class TuneWidget : GlanceAppWidget() {
 
     @Composable
     private fun Content() {
-        val state = AppGraph.engine.state.value
+        val state by AppGraph.engine.state.collectAsState()
         val info = AppGraph.appInfo
         val target = state.target
         val level = state.levelsFor(target).media
