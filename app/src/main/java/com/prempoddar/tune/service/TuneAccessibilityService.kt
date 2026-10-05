@@ -5,6 +5,7 @@ import android.media.AudioManager
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.prempoddar.tune.AppGraph
+import com.prempoddar.tune.ui.panel.PanelWindow
 
 /**
  * Keeps Tune running: tells the engine which app is on screen and turns the volume keys into
@@ -13,9 +14,11 @@ import com.prempoddar.tune.AppGraph
 class TuneAccessibilityService : AccessibilityService() {
 
     private val engine get() = AppGraph.engine
+    private var panel: PanelWindow? = null
 
     override fun onServiceConnected() {
         engine.start()
+        panel = PanelWindow(this)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
@@ -32,7 +35,10 @@ class TuneAccessibilityService : AccessibilityService() {
         }
         val settings = engine.settings
         if (!settings.enabled || !settings.panelEnabled || inCallOrRinging()) return false
-        if (event.action == KeyEvent.ACTION_DOWN) engine.step(up)
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            engine.step(up)
+            panel?.show()
+        }
         return true
     }
 
@@ -46,6 +52,8 @@ class TuneAccessibilityService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
+        panel?.destroy()
+        panel = null
         engine.stop()
         super.onDestroy()
     }
