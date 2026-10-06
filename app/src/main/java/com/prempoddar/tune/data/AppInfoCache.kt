@@ -34,7 +34,8 @@ class AppInfoCache(context: Context) {
         return try {
             pm.getApplicationIcon(pkg).toBitmap(ICON_PX, ICON_PX, Bitmap.Config.ARGB_8888)
                 .also { icons.put(pkg, it) }
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (e: Exception) {
+            // Missing apps, and the odd icon that can't be drawn, just show no icon.
             null
         }
     }

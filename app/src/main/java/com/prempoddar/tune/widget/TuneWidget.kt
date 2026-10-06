@@ -39,15 +39,15 @@ import androidx.glance.text.TextStyle
 import com.prempoddar.tune.AppGraph
 import com.prempoddar.tune.MainActivity
 import com.prempoddar.tune.R
-import com.prempoddar.tune.ui.theme.DarkColors
-import com.prempoddar.tune.ui.theme.LightColors
+import com.prempoddar.tune.ui.design.seedScheme
+import com.prempoddar.tune.ui.theme.TUNE_BRAND
 
 /** Home screen widget: the app the volume buttons move right now, with − and + buttons. */
 class TuneWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            GlanceTheme(colors = ColorProviders(light = LightColors, dark = DarkColors)) {
+            GlanceTheme(colors = ColorProviders(light = seedScheme(TUNE_BRAND, dark = false, pureBlack = false), dark = seedScheme(TUNE_BRAND, dark = true, pureBlack = false))) {
                 Content()
             }
         }

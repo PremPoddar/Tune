@@ -80,4 +80,23 @@ class MixPlannerTest {
     @Test fun noForegroundUsesDefaultForOtherStreams() {
         assertThat(MixPlanner.plan(input(null)).ring).isEqualTo(11)
     }
+
+    @Test fun perAppControlPutsEveryPlayerInMixAndSkipsSessionEffects() {
+        media["spotify"] = 60
+        media["youtube"] = 30
+        val plan = MixPlanner.plan(
+            MixInput("chrome", listOf(Player("spotify", 1), Player("youtube", 2)), mapOf(7 to "spotify"), levelsFor, 15, perApp = true),
+        )
+        assertThat(plan.modes).containsExactly("spotify", ControlMode.MIX, "youtube", ControlMode.MIX)
+        assertThat(plan.masterMediaPct).isEqualTo(60)
+        assertThat(plan.sessionGains).isEmpty()
+        assertThat(plan.appGains["spotify"]).isEqualTo(0f)
+        assertThat(plan.appGains["youtube"]!!).isLessThan(-10f)
+    }
+
+    @Test fun withoutPerAppControlThereAreNoAppGains() {
+        media["spotify"] = 60
+        val plan = MixPlanner.plan(input("chrome", listOf(Player("spotify", 1)), mapOf(7 to "spotify")))
+        assertThat(plan.appGains).isEmpty()
+    }
 }

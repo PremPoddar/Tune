@@ -98,7 +98,7 @@ fun DetailScreen(pkg: String, onBack: () -> Unit) {
 
         Spacer(Modifier.height(10.dp))
         Row(
-            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surface)
+            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

@@ -1,5 +1,10 @@
 package com.prempoddar.tune.ui.onboarding
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.prempoddar.tune.ui.design.BigButton
+import com.prempoddar.tune.ui.components.ShizukuCard
+import com.prempoddar.tune.audio.ShizukuBackend
+import com.prempoddar.tune.AppGraph
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -168,7 +173,7 @@ private fun StepPage(
             Spacer(Modifier.height(20.dp))
             Column(
                 Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surface).padding(start = 16.dp, top = 14.dp, end = 4.dp),
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(start = 16.dp, top = 14.dp, end = 4.dp),
             ) {
                 Text("Is the switch greyed out?", style = MaterialTheme.typography.titleSmall)
                 Text(
@@ -185,7 +190,7 @@ private fun StepPage(
             }
         }
         Spacer(Modifier.weight(1f).height(32.dp))
-        Button(onClick = onPrimary, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(primary) }
+        BigButton(primary, onPrimary)
         secondary?.let {
             Spacer(Modifier.height(8.dp))
             it()
@@ -195,22 +200,30 @@ private fun StepPage(
 
 @Composable
 private fun MoreAppsPage(perms: Permissions, onDone: () -> Unit) {
+    val shizuku = AppGraph.engine.shizuku
+    val status by shizuku.status.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(Unit) {
+        shizuku.start()
+        shizuku.recheck()
+        onPauseOrDispose { }
+    }
     StepPage(
         icon = Icons.Rounded.GraphicEq,
-        title = "Mix more apps (optional)",
-        body = "Music players that announce their audio already get their own volume, playing alongside " +
-            "everything else. Apps like YouTube and browsers don't, so Tune switches the phone's " +
-            "volume for them instead.\n\nIf you have a computer with adb, one command lets Tune mix " +
-            "those apps too. You only run it once.",
-        primary = if (perms.dump) "Done" else "Skip for now",
+        title = "Exact volume for every app",
+        body = "Optional. Music players that share their audio already get their own volume. Apps like " +
+            "YouTube and browsers don't, so Tune switches the phone's volume for them.\n\nWith the free " +
+            "Shizuku app, Tune can set every app exactly. No Shizuku? One adb command from a computer " +
+            "lets Tune mix most of those apps too.",
+        primary = if (status == ShizukuBackend.Status.READY || perms.dump) "Done" else "Skip for now",
         onPrimary = onDone,
         progress = null,
         extra = {
             Spacer(Modifier.height(20.dp))
-            AdbCommandCard(granted = perms.dump)
-        },
-        secondary = if (perms.dump) null else {
-            { OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("I've run it") } }
+            ShizukuCard(status)
+            if (status != ShizukuBackend.Status.READY) {
+                Spacer(Modifier.height(12.dp))
+                AdbCommandCard(granted = perms.dump)
+            }
         },
     )
 }
@@ -220,7 +233,7 @@ private fun MoreAppsPage(perms: Permissions, onDone: () -> Unit) {
 fun AdbCommandCard(granted: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Column(
-        modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surface)
+        modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
     ) {
         Text(

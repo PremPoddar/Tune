@@ -49,6 +49,10 @@ data class EngineState(
     /** Android refused a ring/notification change: Do Not Disturb access is missing. */
     val ringBlocked: Boolean = false,
     val overrides: Map<OverrideKey, Int> = emptyMap(),
+    /** Whether Shizuku is installed, running and allowed. */
+    val shizuku: ShizukuBackend.Status = ShizukuBackend.Status.NOT_INSTALLED,
+    /** True while every app is set exactly through Shizuku. */
+    val perApp: Boolean = false,
 ) {
     fun resolved(pkg: String, routeKey: String = route.key): Resolved {
         val base = ProfileResolver.resolve(pkg, routeKey, profiles)
@@ -79,6 +83,7 @@ class MixEngine(
     private val sessions = SessionTracker(context)
     private val media = MediaSessionWatcher(context)
     private val effects = EffectController()
+    val shizuku = ShizukuBackend(context)
     val foreground = ForegroundTracker(context)
 
     private val _state = MutableStateFlow(EngineState())
@@ -106,8 +111,10 @@ class MixEngine(
         }
         scope.launch {
             settingsRepo.settings.collect { s ->
+                val shizukuChanged = s.useShizuku != settings.useShizuku
                 settings = s
                 _state.update { it.copy(enabled = s.enabled) }
+                if (shizukuChanged) replan()
             }
         }
     }
@@ -117,6 +124,7 @@ class MixEngine(
         streams.start()
         routes.start()
         media.start()
+        shizuku.start()
         runJob = scope.launch {
             sessions.start(this)
             launch { streams.userChanges.collect { (kind, pct) -> onSystemChange(kind, pct) } }
@@ -132,12 +140,12 @@ class MixEngine(
                     media.playing,
                     sessions.dumpStarted,
                     sessions.sessions,
-                    effects.failed,
-                ) { fg, playing, dumpStarted, known, failed ->
+                    effects.failed.combine(shizuku.playing) { f, p -> f to p },
+                ) { fg, playing, dumpStarted, known, (failed, shizukuPlaying) ->
                     val now = SystemClock.elapsedRealtime()
-                    val active = playing.keys + dumpStarted
+                    val active = playing.keys + dumpStarted + shizukuPlaying.keys
                     firstSeen.keys.retainAll(active)
-                    val players = active.map { pkg -> Player(pkg, playing[pkg] ?: firstSeen.getOrPut(pkg) { now }) }
+                    val players = active.map { pkg -> Player(pkg, playing[pkg] ?: shizukuPlaying[pkg] ?: firstSeen.getOrPut(pkg) { now }) }
                     Triple(fg, players, known.filterKeys { it !in failed })
                 }.combine(routes.route) { t, route -> t to route }
                     .collect { (t, route) ->
@@ -148,6 +156,12 @@ class MixEngine(
                         knownSessions = known
                         replan()
                     }
+            }
+            launch {
+                shizuku.status.collect { st ->
+                    _state.update { it.copy(shizuku = st) }
+                    replan()
+                }
             }
             launch {
                 // Re-plan whenever stored levels, overrides or the on/off switch change.
@@ -162,11 +176,12 @@ class MixEngine(
         runJob = null
         sessions.stop()
         media.stop()
+        shizuku.stop()
         routes.stop()
         streams.stop()
         effects.releaseAll()
         lastApplied = null
-        _state.update { it.copy(running = false, foreground = null, players = emptyList(), plan = null) }
+        _state.update { it.copy(running = false, foreground = null, players = emptyList(), plan = null, perApp = false) }
     }
 
     fun onWindowChanged(pkg: String?) = foreground.onWindow(pkg)
@@ -231,6 +246,7 @@ class MixEngine(
             _state.update { it.copy(overrides = it.overrides - stale.toSet()) }
             return // the update re-enters replan
         }
+        val perApp = settings.useShizuku && s.shizuku == ShizukuBackend.Status.READY
         val plan = MixPlanner.plan(
             MixInput(
                 foreground = s.foreground,
@@ -238,11 +254,13 @@ class MixEngine(
                 sessions = knownSessions,
                 levelsFor = s::levelsFor,
                 mediaMaxIndex = streams.maxIndex(StreamKind.MEDIA),
+                perApp = perApp,
             ),
         )
-        _state.update { it.copy(plan = plan) }
+        _state.update { it.copy(plan = plan, perApp = perApp) }
         if (!s.enabled) {
             effects.releaseAll()
+            shizuku.apply(emptyMap())
             lastApplied = null
             return
         }
@@ -257,6 +275,7 @@ class MixEngine(
         other(StreamKind.NOTIFICATION, plan.notification, last?.notification)
         other(StreamKind.ALARM, plan.alarm, last?.alarm)
         effects.apply(plan.sessionGains)
+        shizuku.apply(plan.appGains)
         lastApplied = plan
         if (blocked != s.ringBlocked) _state.update { it.copy(ringBlocked = blocked) }
     }

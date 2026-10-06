@@ -9,7 +9,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prempoddar.tune.AppGraph
+import com.prempoddar.tune.R
+import com.prempoddar.tune.data.TuneSettings
+import com.prempoddar.tune.ui.design.AboutScreen
+import com.prempoddar.tune.ui.design.AppearanceScreen
+import com.prempoddar.tune.ui.design.Credit
+import com.prempoddar.tune.ui.design.LayeredIcon
+import com.prempoddar.tune.ui.theme.TUNE_BRAND
 import com.prempoddar.tune.ui.detail.DetailScreen
 import com.prempoddar.tune.ui.home.HomeScreen
 import com.prempoddar.tune.ui.onboarding.OnboardingScreen
@@ -44,6 +53,30 @@ fun TuneNavHost(onboarded: Boolean) {
         composable("app/{pkg}") { entry ->
             DetailScreen(pkg = entry.arguments?.getString("pkg").orEmpty(), onBack = { nav.popBackStack() })
         }
-        composable("settings") { SettingsScreen(onBack = { nav.popBackStack() }) }
+        composable("settings") {
+            SettingsScreen(onBack = { nav.popBackStack() }, onAppearance = { nav.navigate("appearance") }, onAbout = { nav.navigate("about") })
+        }
+        composable("appearance") {
+            val settings by AppGraph.settings.settings.collectAsStateWithLifecycle(TuneSettings())
+            AppearanceScreen(
+                settings.appearance, TUNE_BRAND,
+                onChange = { a -> scope.launch { AppGraph.settings.update { it.copy(appearance = a) } } },
+                onBack = { nav.popBackStack() },
+            )
+        }
+        composable("about") {
+            AboutScreen(
+                "Tune", "A volume for every app, remembered for every speaker and headphones.",
+                icon = { LayeredIcon(R.drawable.ic_launcher_background, R.drawable.ic_launcher_foreground) },
+                credits = listOf(
+                    Credit("Jetpack Compose and Glance", "Apache 2.0"),
+                    Credit("Shizuku API", "Apache 2.0"),
+                    Credit("HiddenApiBypass", "Apache 2.0"),
+                    Credit("Material Color Utilities", "Apache 2.0"),
+                    Credit("Nunito", "SIL Open Font License"),
+                ),
+                onBack = { nav.popBackStack() },
+            )
+        }
     }
 }

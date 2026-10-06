@@ -11,6 +11,8 @@ data class MixInput(
     /** Levels for a package on the current route; unknown packages get the Default levels. */
     val levelsFor: (String) -> Levels,
     val mediaMaxIndex: Int,
+    /** True when every app's own player volume can be set (Shizuku), not just audio sessions. */
+    val perApp: Boolean = false,
 )
 
 data class MixPlan(
@@ -21,6 +23,8 @@ data class MixPlan(
     val alarm: Int,
     /** Gain in dB for every known session. */
     val sessionGains: Map<Int, Float>,
+    /** Gain in dB for every playing app, when apps can be set one by one. */
+    val appGains: Map<String, Float> = emptyMap(),
     val modes: Map<String, ControlMode>,
     /** The app the volume keys adjust; null means the Default profile. */
     val target: String?,
@@ -33,7 +37,7 @@ object MixPlanner {
         val fgLevels = input.levelsFor(input.foreground ?: DEFAULT_PKG)
         val mixPkgs = input.sessions.values.toSet()
         val modes = input.players.associate { player ->
-            player.pkg to if (player.pkg in mixPkgs) ControlMode.MIX else ControlMode.SWITCH
+            player.pkg to if (input.perApp || player.pkg in mixPkgs) ControlMode.MIX else ControlMode.SWITCH
         }
 
         // A Switch-mode app can only be set through the stream itself, so it owns the master
@@ -50,8 +54,11 @@ object MixPlanner {
         val mediaIndex = VolumeMath.pctToIndex(masterPct, input.mediaMaxIndex)
         val masterQ = VolumeMath.indexToPct(mediaIndex, input.mediaMaxIndex)
 
-        val gains = input.sessions.mapValues { (_, pkg) ->
+        val gains = if (input.perApp) emptyMap() else input.sessions.mapValues { (_, pkg) ->
             VolumeMath.gainDb(input.levelsFor(pkg).media, masterQ)
+        }
+        val appGains = if (!input.perApp) emptyMap() else input.players.associate { p ->
+            p.pkg to VolumeMath.gainDb(input.levelsFor(p.pkg).media, masterQ)
         }
 
         val target = when {
@@ -67,6 +74,7 @@ object MixPlanner {
             notification = fgLevels.notification,
             alarm = fgLevels.alarm,
             sessionGains = gains,
+            appGains = appGains,
             modes = modes,
             target = target,
         )

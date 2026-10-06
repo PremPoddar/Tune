@@ -79,7 +79,7 @@ fun VolumePanel(
         if (transition.isIdle && !transition.currentState) onHidden()
     }
 
-    TuneTheme(engine.settings.theme) {
+    TuneTheme(engine.settings.appearance) {
         // A tap anywhere outside the card closes the panel, like the system one.
         Box(Modifier.fillMaxSize().then(if (visible) Modifier.pointerInput(Unit) { detectTapGestures { onDismiss() } } else Modifier)) {
         AnimatedVisibility(
@@ -93,7 +93,7 @@ fun VolumePanel(
             ) {
                 Surface(
                     shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                     shadowElevation = 12.dp,
                     modifier = Modifier.widthIn(max = 420.dp).fillMaxWidth()
                         .pointerInput(Unit) { detectTapGestures { } } // taps on the card stay on the card
@@ -101,31 +101,29 @@ fun VolumePanel(
                 ) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         val target = state.target
-                        PanelRow(
-                            pkg = target,
-                            level = state.levelsFor(target).media,
-                            onLevel = {
-                                engine.setLevel(target, StreamKind.MEDIA, it)
+                        Row(Modifier.fillMaxWidth().padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Volume · ${state.route.name}", style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                                contentDescription = if (expanded) "Show less" else "Show all volumes",
+                                modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(onClick = onExpand).padding(6.dp),
+                            )
+                        }
+                        // The app the buttons move comes first, then everything else that's playing.
+                        (listOf(target) + state.players.map { it.pkg }.filter { it != target }).forEach { pkg ->
+                            PanelRow(pkg, state.levelsFor(pkg).media, onLevel = {
+                                engine.setLevel(pkg, StreamKind.MEDIA, it)
                                 onInteract()
-                            },
-                            trailing = {
-                                Icon(
-                                    if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                                    contentDescription = if (expanded) "Show less" else "Show all volumes",
-                                    modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(onClick = onExpand).padding(6.dp),
-                                )
-                            },
-                        )
+                            })
+                        }
                         if (expanded) {
-                            state.players.map { it.pkg }.filter { it != target }.forEach { pkg ->
-                                PanelRow(pkg, state.levelsFor(pkg).media, onLevel = {
-                                    engine.setLevel(pkg, StreamKind.MEDIA, it)
-                                    onInteract()
-                                })
-                            }
                             val fg = state.foreground ?: DEFAULT_PKG
                             val fgLevels = state.levelsFor(fg)
-                            val tint = MaterialTheme.colorScheme.primaryContainer
+                            val tint = MaterialTheme.colorScheme.secondaryContainer
                             StreamSlider("Ring", Icons.Rounded.RingVolume, fgLevels.ring, tint, {
                                 engine.setLevel(fg, StreamKind.RING, it); onInteract()
                             })

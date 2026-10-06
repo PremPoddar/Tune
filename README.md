@@ -49,6 +49,14 @@ it gets:
 When a Switch app and Mix apps play together, the Switch app gets its exact level and the Mix
 apps can be turned down from it but not above it. An effect can only lower an app, never boost it.
 
+### Exact volume with Shizuku (optional)
+
+With [Shizuku](https://shizuku.rikka.app/) running and Tune allowed in it, Tune asks Android's
+audio service for every player on the phone and scales each app's own player, the same way the
+system ducks audio. Every app then plays at its own level at the same time, YouTube and
+browsers included. Turn it off under Settings → Engine; without Shizuku Tune uses the engine
+described above.
+
 ### Mix more apps (optional)
 
 One adb command lets Tune read Android's own list of what's playing, which names the audio
