@@ -1,6 +1,11 @@
 package com.prempoddar.tune.ui.panel
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
@@ -64,6 +69,7 @@ fun VolumePanel(
     onInteract: () -> Unit,
     onOpenTune: () -> Unit,
     onHidden: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val engine = AppGraph.engine
     val state by engine.state.collectAsStateWithLifecycle()
@@ -74,6 +80,8 @@ fun VolumePanel(
     }
 
     TuneTheme(engine.settings.theme) {
+        // A tap anywhere outside the card closes the panel, like the system one.
+        Box(Modifier.fillMaxSize().then(if (visible) Modifier.pointerInput(Unit) { detectTapGestures { onDismiss() } } else Modifier)) {
         AnimatedVisibility(
             visibleState = transition,
             enter = slideInVertically { -it } + fadeIn(),
@@ -87,7 +95,9 @@ fun VolumePanel(
                     shape = MaterialTheme.shapes.extraLarge,
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 12.dp,
-                    modifier = Modifier.widthIn(max = 420.dp).fillMaxWidth().animateContentSize(),
+                    modifier = Modifier.widthIn(max = 420.dp).fillMaxWidth()
+                        .pointerInput(Unit) { detectTapGestures { } } // taps on the card stay on the card
+                        .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow)),
                 ) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         val target = state.target
@@ -130,6 +140,7 @@ fun VolumePanel(
                     }
                 }
             }
+        }
         }
     }
 }

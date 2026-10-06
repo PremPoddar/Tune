@@ -6,7 +6,6 @@ import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.WindowManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
@@ -49,10 +48,6 @@ class PanelWindow(private val context: Context) {
             setViewTreeLifecycleOwner(o)
             setViewTreeSavedStateRegistryOwner(o)
             setViewTreeViewModelStoreOwner(o)
-            setOnTouchListener { _, e ->
-                if (e.action == MotionEvent.ACTION_OUTSIDE) visible.value = false
-                false
-            }
             setContent {
                 VolumePanel(
                     visible = visible.value,
@@ -69,16 +64,19 @@ class PanelWindow(private val context: Context) {
                         )
                     },
                     onHidden = { handler.post(::detach) },
+                    onDismiss = { visible.value = false },
                 )
             }
         }
+        // A fixed full-screen window: the panel animates inside it. Sizing the window to the panel made
+        // every frame of the expand animation resize the window, which crawled.
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT,
         ).apply { gravity = Gravity.TOP }
         wm.addView(v, params)
