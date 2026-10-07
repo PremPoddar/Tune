@@ -12,3 +12,6 @@ keystore.properties
 *.keystore
 *.jks
 app/release/
+
+# Built app for sharing
+/*.apk
