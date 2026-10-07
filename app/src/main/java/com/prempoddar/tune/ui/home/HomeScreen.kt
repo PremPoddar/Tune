@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prempoddar.tune.AppGraph
 import com.prempoddar.tune.audio.EngineState
 import com.prempoddar.tune.audio.ShizukuBackend
+import com.prempoddar.tune.core.ControlMode
 import com.prempoddar.tune.core.DEFAULT_PKG
 import com.prempoddar.tune.core.RouteInfo
 import com.prempoddar.tune.core.StreamKind
@@ -84,6 +85,9 @@ fun HomeScreen(onOpenApp: (String) -> Unit, onOpenSettings: () -> Unit, onFixPer
 
     val playing = state.players.sortedByDescending { it.startedAt }
     val playingPkgs = playing.map { it.pkg }.toSet()
+    // Playing apps Tune can only move with the phone's volume, not on their own.
+    val shared = playing.map { it.pkg }.filter { state.plan?.modes?.get(it) == ControlMode.SWITCH }
+        .let { sw -> if (sw.isNotEmpty() && playing.size >= 2) playing.map { it.pkg } else emptyList() }
     val allSaved = savedApps(state, "")
     val apps = savedApps(state, query).filter { it !in playingPkgs }
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -132,6 +136,14 @@ fun HomeScreen(onOpenApp: (String) -> Unit, onOpenSettings: () -> Unit, onFixPer
                         "Ring volume can't be changed",
                         "Android needs Do Not Disturb access before Tune can set ring and notification volume.",
                         "Allow", { context.open(PermissionState.dndIntent()) }, warning = true,
+                    )
+                    // Two apps playing that can only share the phone's one volume: say so, and how to fix it.
+                    !state.perApp && shared.size >= 2 && settings.useShizuku ->
+                        ShizukuCard(state.shizuku, headline = "${shared.take(2).joinToString(" and ") { AppGraph.appInfo.label(it) }} share one volume")
+                    !state.perApp && shared.size >= 2 -> Banner(
+                        "${shared.take(2).joinToString(" and ") { AppGraph.appInfo.label(it) }} share one volume",
+                        "Turn on Shizuku in Settings to give every app its own volume.",
+                        "Settings", onOpenSettings,
                     )
                     settings.useShizuku && state.shizuku == ShizukuBackend.Status.NEEDS_PERMISSION -> ShizukuCard(state.shizuku)
                     else -> Unit
