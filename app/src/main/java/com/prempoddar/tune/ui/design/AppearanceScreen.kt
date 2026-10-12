@@ -2,6 +2,13 @@
 
 package com.prempoddar.tune.ui.design
 
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -118,22 +125,44 @@ private fun Preview() {
 /** A library or font the app is built with, and its licence. */
 data class Credit(val name: String, val licence: String)
 
-/** The launcher icon drawn from its two vector layers (adaptive icons can't be painted directly). */
+/** Who makes the apps, and where to find them. The links are placeholders until those pages exist. */
+object Developer {
+    const val NAME = "Prem Poddar"
+    const val GITHUB = "https://github.com/"
+    const val SITE = "https://example.com/"
+}
+
+/** The launcher icon drawn from its two layers (adaptive icons and shape layers can't be painted directly). */
 @Composable
 fun LayeredIcon(background: Int, foreground: Int) {
-    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(background), null, Modifier.fillMaxSize())
-        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(foreground), null, Modifier.fillMaxSize())
+    val context = LocalContext.current
+    val layers = androidx.compose.runtime.remember(background, foreground) {
+        listOfNotNull(androidx.core.content.ContextCompat.getDrawable(context, background), androidx.core.content.ContextCompat.getDrawable(context, foreground))
+    }
+    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+        drawIntoCanvas { c ->
+            layers.forEach { d ->
+                d.setBounds(0, 0, size.width.toInt(), size.height.toInt())
+                d.draw(c.nativeCanvas)
+            }
+        }
     }
 }
 
-/** Name, version, what the app is, and what it's built with. */
+/** Name, version, what the app is, who built it, optional notes (like privacy), and what it's built with. */
 @Composable
-fun AboutScreen(appName: String, tagline: String, icon: @Composable () -> Unit, credits: List<Credit>, onBack: () -> Unit, extra: (@Composable () -> Unit)? = null) {
+fun AboutScreen(
+    appName: String, tagline: String, icon: @Composable () -> Unit, credits: List<Credit>, onBack: () -> Unit,
+    extra: (@Composable () -> Unit)? = null,
+    /** Short titled notes shown in their own group, such as how the app treats your data. */
+    notes: List<Pair<String, String>> = emptyList(),
+    notesTitle: String = "Privacy",
+) {
     val context = LocalContext.current
     val version = runCatching {
         @Suppress("DEPRECATION") context.packageManager.getPackageInfo(context.packageName, 0).versionName
     }.getOrNull() ?: "—"
+    fun open(url: String) = runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
     ExpressiveScaffold("About", onBack = onBack) { pad ->
         LazyColumn(contentPadding = PaddingValues(top = pad.calculateTopPadding(), bottom = pad.calculateBottomPadding() + 32.dp)) {
             item {
@@ -144,6 +173,32 @@ fun AboutScreen(appName: String, tagline: String, icon: @Composable () -> Unit, 
                     Text(tagline, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 420.dp))
                     Spacer(Modifier.height(10.dp))
                     AssistChip(onClick = {}, label = { Text("Version $version") })
+                }
+            }
+            item {
+                TonalCard(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(), color = MaterialTheme.colorScheme.primaryContainer) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(androidx.compose.material.icons.Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(32.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Text("Built with love by", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(Developer.NAME, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(
+                            "Made to be fast, private and a pleasure to use. Thank you for using it.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer, textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                }
+            }
+            item {
+                SettingsGroup("Links") {
+                    SettingsRow("Source code", "GitHub", androidx.compose.material.icons.Icons.Rounded.Code, onClick = { open(Developer.GITHUB) })
+                    SettingsRow("Developer's site", Developer.SITE.removePrefix("https://").trimEnd('/'), androidx.compose.material.icons.Icons.Rounded.Language, onClick = { open(Developer.SITE) })
+                }
+            }
+            if (notes.isNotEmpty()) item {
+                SettingsGroup(notesTitle) {
+                    notes.forEach { (title, body) -> SettingsRow(title, body, androidx.compose.material.icons.Icons.Rounded.Shield) }
                 }
             }
             if (extra != null) item { extra() }

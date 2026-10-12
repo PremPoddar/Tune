@@ -75,6 +75,15 @@ class ScreensTest {
     @Test fun settingsDark() = shoot("settings-dark", dark) { SettingsScreen({}, {}, {}) }
     @Test fun settingsLight() = shoot("settings-light", light) { SettingsScreen({}, {}, {}) }
 
+    @Test fun aboutDark() = shoot("about-dark", dark) {
+        com.prempoddar.tune.ui.design.AboutScreen(
+            "Tune", "A volume for every app.",
+            icon = { com.prempoddar.tune.ui.design.LayeredIcon(com.prempoddar.tune.R.drawable.ic_launcher_background, com.prempoddar.tune.R.drawable.ic_launcher_foreground) },
+            credits = listOf(com.prempoddar.tune.ui.design.Credit("Jetpack Compose", "Apache 2.0")), onBack = {},
+            notes = listOf("Stays on your phone" to "Tune never sends anything anywhere."),
+        )
+    }
+
     @Config(qualifiers = "w891dp-h411dp-land-xxhdpi")
     @Test fun homeLandscape() = shoot("home-land", light) { HomeScreen({}, {}, {}) }
 }
