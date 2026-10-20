@@ -135,7 +135,7 @@ fun SettingsScreen(onBack: () -> Unit, onAppearance: () -> Unit, onAbout: () -> 
             }
             item {
                 SettingsGroup("General") {
-                    SettingsRow("Look & feel", "Theme, colours, font, shapes and haptics", Icons.Rounded.Palette, onClick = onAppearance) { Chevron() }
+                    SettingsRow("Appearance", "Theme, colours, font, shapes and haptics", Icons.Rounded.Palette, onClick = onAppearance) { Chevron() }
                     SettingsRow("About Tune", "Version, licences", Icons.Rounded.Info, onClick = onAbout) { Chevron() }
                 }
             }

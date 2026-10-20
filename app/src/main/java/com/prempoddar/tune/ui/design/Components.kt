@@ -28,6 +28,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -240,7 +242,7 @@ fun SwitchRow(title: String, summary: String? = null, icon: ImageVector? = null,
             Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
             if (summary != null) Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))
         }
-        Switch(checked = checked, onCheckedChange = toggled(onChange), enabled = enabled)
+        IconSwitch(checked, enabled, toggled(onChange))
     }
 }
 
@@ -360,5 +362,19 @@ fun Swatch(color: Color, selected: Boolean, label: String, onClick: () -> Unit) 
             .clickable(onClickLabel = label, onClick = { if (!selected) Haptics.select(); onClick() })
             .padding(if (selected) 3.dp else 0.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
             .padding(if (selected) 3.dp else 0.dp).clip(CircleShape).background(color),
+    )
+}
+
+/** A switch whose knob shows a tick when on and a cross when off, so it reads at a glance. */
+@Composable
+fun IconSwitch(checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+    Switch(
+        checked = checked, onCheckedChange = onChange, enabled = enabled,
+        thumbContent = {
+            Icon(
+                if (checked) Icons.Rounded.Check else Icons.Rounded.Close, null,
+                Modifier.size(androidx.compose.material3.SwitchDefaults.IconSize),
+            )
+        },
     )
 }
