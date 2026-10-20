@@ -74,7 +74,10 @@ fun ExpressiveScaffold(
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val behavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    // How far the title has folded away is kept in pixels, so it starts afresh when the screen's
+    // density changes (Compact, text size): an old amount can be more than the new bar's height.
+    val state = androidx.compose.runtime.key(androidx.compose.ui.platform.LocalDensity.current.density) { rememberTopAppBarState() }
+    val behavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(state)
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(behavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
