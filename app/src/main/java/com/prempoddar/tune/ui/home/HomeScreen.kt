@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.home
 
+import com.prempoddar.tune.ui.design.tap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -248,11 +249,11 @@ private fun Header(route: RouteInfo, engineLine: String, enabled: Boolean, onTog
                 )
             }
         }
-        FilledTonalIconButton(onClick = onToggle) {
+        FilledTonalIconButton(onClick = tap(onToggle)) {
             Icon(if (enabled) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = if (enabled) "Pause Tune" else "Resume Tune")
         }
         Spacer(Modifier.width(4.dp))
-        FilledTonalIconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, contentDescription = "Settings") }
+        FilledTonalIconButton(onClick = tap(onSettings)) { Icon(Icons.Rounded.Settings, contentDescription = "Settings") }
     }
 }
 

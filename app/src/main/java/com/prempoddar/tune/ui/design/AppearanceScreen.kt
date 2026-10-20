@@ -28,6 +28,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Wallpaper
+import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.UnfoldLess
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -41,52 +44,93 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/** Theme, black backgrounds, wallpaper colours and accent, with a live preview at the top. */
+/**
+ * Look & feel: theme, colours, font, shapes, spacing and touch feedback, with a live preview at
+ * the top. The settings people change most are big toggles; the rest are pick-one chips.
+ */
 @Composable
 fun AppearanceScreen(appearance: Appearance, brand: Int, onChange: (Appearance) -> Unit, onBack: () -> Unit) {
-    ExpressiveScaffold("Appearance", onBack = onBack) { pad ->
+    val a = appearance
+    ExpressiveScaffold("Look & feel", onBack = onBack) { pad ->
         LazyColumn(contentPadding = PaddingValues(top = pad.calculateTopPadding(), bottom = pad.calculateBottomPadding() + 32.dp)) {
             item { Preview() }
+            item {
+                SectionLabel("Quick toggles")
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        QuickToggle("Haptics", Icons.Rounded.Vibration, a.haptics, Modifier.weight(1f)) { onChange(a.copy(haptics = it)) }
+                        QuickToggle("Material You", Icons.Rounded.Wallpaper, a.dynamic && dynamicColourSupported, Modifier.weight(1f), enabled = dynamicColourSupported) { onChange(a.copy(dynamic = it)) }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        QuickToggle("Pure black", Icons.Rounded.DarkMode, a.pureBlack, Modifier.weight(1f), enabled = a.mode != Appearance.Mode.LIGHT) { onChange(a.copy(pureBlack = it, dusk = if (it) false else a.dusk)) }
+                        QuickToggle("Compact", Icons.Rounded.UnfoldLess, a.compact, Modifier.weight(1f)) { onChange(a.copy(compact = it)) }
+                    }
+                }
+            }
             item {
                 SectionLabel("Theme")
                 ChoiceChips(
                     listOf(Appearance.Mode.SYSTEM to "Follow system", Appearance.Mode.LIGHT to "Light", Appearance.Mode.DARK to "Dark"),
-                    appearance.mode, { onChange(appearance.copy(mode = it)) },
+                    a.mode, { onChange(a.copy(mode = it)) },
                 )
-                Spacer(Modifier.height(12.dp))
-                SettingsGroup {
-                    SwitchRow(
-                        "Pure black", "Black backgrounds in dark mode, easy on OLED screens", Icons.Rounded.DarkMode,
-                        checked = appearance.pureBlack, enabled = appearance.mode != Appearance.Mode.LIGHT,
-                    ) { onChange(appearance.copy(pureBlack = it)) }
+                if (a.mode != Appearance.Mode.LIGHT) {
+                    SectionLabel("Dark style")
+                    val style = when { a.pureBlack -> "black"; a.dusk -> "dusk"; else -> "standard" }
+                    ChoiceChips(listOf("standard" to "Standard", "dusk" to "Dusk", "black" to "OLED black"), style, { v ->
+                        onChange(a.copy(dusk = v == "dusk", pureBlack = v == "black"))
+                    })
                 }
             }
             item {
-                SettingsGroup("Colour") {
-                    SwitchRow(
-                        "Match wallpaper",
-                        if (dynamicColourSupported) "Take colours from your wallpaper" else "Needs Android 12 or newer",
-                        Icons.Rounded.Wallpaper, checked = appearance.dynamic && dynamicColourSupported, enabled = dynamicColourSupported,
-                    ) { onChange(appearance.copy(dynamic = it)) }
-                }
-            }
-            item {
-                val usingAccent = !(appearance.dynamic && dynamicColourSupported)
+                val usingAccent = !(a.dynamic && dynamicColourSupported)
                 SectionLabel("Accent")
                 FlowRow(
                     Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Swatch(Color(0xFF000000.toInt() or brand), usingAccent && appearance.accent == null, "App colour") { onChange(appearance.copy(accent = null, dynamic = false)) }
+                    Swatch(Color(0xFF000000.toInt() or brand), usingAccent && a.accent == null, "App colour") { onChange(a.copy(accent = null, dynamic = false)) }
                     ACCENTS.filter { it != brand }.forEach { c ->
-                        Swatch(Color(0xFF000000.toInt() or c), usingAccent && appearance.accent == c, "Accent #%06X".format(c)) { onChange(appearance.copy(accent = c, dynamic = false)) }
+                        Swatch(Color(0xFF000000.toInt() or c), usingAccent && a.accent == c, "Accent #%06X".format(c)) { onChange(a.copy(accent = c, dynamic = false)) }
                     }
                 }
                 Text(
-                    if (usingAccent) "The first colour is the app's own." else "Wallpaper colours are on; picking an accent turns them off.",
+                    if (usingAccent) "The first colour is the app's own." else "Material You is on; picking an accent turns it off.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                 )
+                if (usingAccent) {
+                    SectionLabel("Colour style")
+                    ChoiceChips(Appearance.Palette.entries.map { it to it.label }, a.palette, { onChange(a.copy(palette = it)) })
+                    SectionLabel("Contrast")
+                    ChoiceChips(Appearance.Contrast.entries.map { it to it.label }, a.contrast, { onChange(a.copy(contrast = it)) })
+                }
+            }
+            item {
+                SectionLabel("Font")
+                FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Appearance.Font.entries.forEach { f ->
+                        val on = f == a.font
+                        Surface(
+                            onClick = { if (!on) Haptics.select(); onChange(a.copy(font = f)) }, shape = RoundedCornerShape(14.dp),
+                            color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = if (on) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            // Each name in its own font, so the choice can be seen before it's made.
+                            val style = familyFor(f)?.let { MaterialTheme.typography.labelLarge.copy(fontFamily = it) } ?: MaterialTheme.typography.labelLarge
+                            Text(f.label, style = style, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
+                        }
+                    }
+                }
+                SectionLabel("Text size")
+                ChoiceChips(Appearance.TextSize.entries.map { it to it.label }, a.textSize, { onChange(a.copy(textSize = it)) })
+                SectionLabel("Corners")
+                ChoiceChips(Appearance.Corners.entries.map { it to it.label }, a.corners, { onChange(a.copy(corners = it)) })
+            }
+            item {
+                Spacer(Modifier.height(16.dp))
+                SettingsGroup {
+                    SettingsRow("Reset look & feel", "Back to the app's own colours, font and shapes", Icons.Rounded.RestartAlt, onClick = { Haptics.confirm(); onChange(Appearance()) })
+                }
             }
         }
     }
@@ -108,13 +152,13 @@ private fun Preview() {
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(shape = RoundedCornerShape(20.dp), color = s.primary, contentColor = s.onPrimary) {
+                Surface(shape = MaterialTheme.shapes.large, color = s.primary, contentColor = s.onPrimary) {
                     Text("Button", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
                 }
-                Surface(shape = RoundedCornerShape(20.dp), color = s.secondaryContainer, contentColor = s.onSecondaryContainer) {
+                Surface(shape = MaterialTheme.shapes.large, color = s.secondaryContainer, contentColor = s.onSecondaryContainer) {
                     Text("Tonal", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
                 }
-                Surface(shape = RoundedCornerShape(20.dp), color = s.tertiaryContainer, contentColor = s.onTertiaryContainer) {
+                Surface(shape = MaterialTheme.shapes.large, color = s.tertiaryContainer, contentColor = s.onTertiaryContainer) {
                     Text("Accent", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
                 }
             }

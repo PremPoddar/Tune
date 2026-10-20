@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.components
 
+import com.prempoddar.tune.ui.design.tap
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -83,7 +84,7 @@ fun ShizukuCard(status: Status, modifier: Modifier = Modifier, headline: String?
         }
         if (action != null) {
             Row(Modifier.fillMaxWidth().padding(start = 54.dp, top = 12.dp)) {
-                FilledTonalButton(onClick = action.second) { Text(action.first) }
+                FilledTonalButton(onClick = tap(action.second)) { Text(action.first) }
             }
         }
     }

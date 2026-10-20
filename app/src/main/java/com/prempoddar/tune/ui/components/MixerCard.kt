@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.components
 
+import com.prempoddar.tune.ui.design.sliding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -87,7 +88,7 @@ fun MixerCard(
             }
             Slider(
                 value = dragging ?: level.toFloat(),
-                onValueChange = { v ->
+                onValueChange = sliding(0f..1f) { v ->
                     dragging = v
                     onLevel(v.roundToInt())
                 },

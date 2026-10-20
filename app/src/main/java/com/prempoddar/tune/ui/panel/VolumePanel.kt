@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.panel
 
+import com.prempoddar.tune.ui.design.tap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -133,7 +134,7 @@ fun VolumePanel(
                             StreamSlider("Alarm", Icons.Rounded.Alarm, fgLevels.alarm, tint, {
                                 engine.setLevel(fg, StreamKind.ALARM, it); onInteract()
                             })
-                            TextButton(onClick = onOpenTune, modifier = Modifier.align(Alignment.End)) { Text("Open Tune") }
+                            TextButton(onClick = tap(onOpenTune), modifier = Modifier.align(Alignment.End)) { Text("Open Tune") }
                         }
                     }
                 }

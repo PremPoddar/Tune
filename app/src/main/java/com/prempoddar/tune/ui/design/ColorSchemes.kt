@@ -9,15 +9,26 @@ import com.materialkolor.dynamiccolor.DynamicColor
 import com.materialkolor.dynamiccolor.MaterialDynamicColors
 import com.materialkolor.hct.Hct
 import com.materialkolor.scheme.SchemeContent
+import com.materialkolor.scheme.SchemeExpressive
+import com.materialkolor.scheme.SchemeMonochrome
+import com.materialkolor.scheme.SchemeTonalSpot
+import com.materialkolor.scheme.SchemeVibrant
 
 /**
  * Every colour role from one seed, using Material's own colour science. Text and controls take
  * their "on" roles from here, so they always contrast with what they sit on — in light, dark and
  * black, whatever accent is chosen.
  */
-fun seedScheme(seed: Int, dark: Boolean, pureBlack: Boolean = false): ColorScheme {
+fun seedScheme(seed: Int, dark: Boolean, pureBlack: Boolean = false, palette: Appearance.Palette = Appearance.Palette.APP, contrast: Double = 0.0): ColorScheme {
+    val hct = Hct.fromInt(seed)
     // "Content" keeps the seed's own vividness for the primary colour, so a brand colour stays itself.
-    val s = SchemeContent(Hct.fromInt(seed), dark, 0.0)
+    val s = when (palette) {
+        Appearance.Palette.APP -> SchemeContent(hct, dark, contrast)
+        Appearance.Palette.TONAL -> SchemeTonalSpot(hct, dark, contrast)
+        Appearance.Palette.VIBRANT -> SchemeVibrant(hct, dark, contrast)
+        Appearance.Palette.EXPRESSIVE -> SchemeExpressive(hct, dark, contrast)
+        Appearance.Palette.MONO -> SchemeMonochrome(hct, dark, contrast)
+    }
     val m = MaterialDynamicColors()
     fun c(d: DynamicColor) = Color(d.getArgb(s))
     val scheme = if (dark) darkColorScheme(
@@ -58,3 +69,20 @@ fun blacken(s: ColorScheme): ColorScheme = s.copy(
     surfaceContainerHigh = lerp(s.surfaceContainerHigh, Color.Black, 0.4f),
     surfaceContainerHighest = lerp(s.surfaceContainerHighest, Color.Black, 0.3f),
 )
+
+/**
+ * Dusk: a dark mode that's softer than the usual near-black, lifted a little and tinted with the
+ * accent, for evening reading without the hard contrast of black.
+ */
+fun dusken(s: ColorScheme): ColorScheme {
+    val base = lerp(lerp(s.surfaceContainerHigh, s.surface, 0.35f), s.primary, 0.06f)
+    return s.copy(
+        background = base, surface = base, surfaceDim = lerp(base, Color.Black, 0.15f),
+        surfaceContainerLowest = lerp(base, Color.Black, 0.2f),
+        surfaceContainerLow = lerp(base, s.surfaceContainerHighest, 0.25f),
+        surfaceContainer = lerp(base, s.surfaceContainerHighest, 0.45f),
+        surfaceContainerHigh = lerp(base, s.surfaceContainerHighest, 0.7f),
+        surfaceContainerHighest = lerp(s.surfaceContainerHighest, s.onSurface, 0.06f),
+        surfaceBright = lerp(s.surfaceBright, s.onSurface, 0.05f),
+    )
+}

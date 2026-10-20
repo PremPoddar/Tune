@@ -1,5 +1,7 @@
 package com.prempoddar.tune.ui.detail
 
+import com.prempoddar.tune.ui.design.tap
+import com.prempoddar.tune.ui.design.toggled
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,7 +73,7 @@ fun DetailScreen(pkg: String, onBack: () -> Unit) {
             .padding(top = insets.calculateTopPadding(), bottom = insets.calculateBottomPadding() + 24.dp)
             .padding(horizontal = 16.dp),
     ) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back") }
+        IconButton(onClick = tap(onBack)) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back") }
 
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(104.dp).clip(CircleShape).background(tint), contentAlignment = Alignment.Center) {
@@ -112,14 +114,14 @@ fun DetailScreen(pkg: String, onBack: () -> Unit) {
             }
             Switch(
                 checked = resolved.pinned,
-                onCheckedChange = { pinned ->
+                onCheckedChange = toggled { pinned ->
                     scope.launch { AppGraph.profiles.setPinned(pkg, selected, pinned, resolved.levels) }
                 },
                 modifier = Modifier.padding(start = 12.dp),
             )
         }
 
-        TextButton(onClick = { confirmForget = true }, modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally)) {
+        TextButton(onClick = tap { confirmForget = true }, modifier = Modifier.padding(top = 12.dp).align(Alignment.CenterHorizontally)) {
             Text("Forget $label", color = MaterialTheme.colorScheme.error)
         }
     }
@@ -130,13 +132,13 @@ fun DetailScreen(pkg: String, onBack: () -> Unit) {
             title = { Text("Forget $label?") },
             text = { Text("Its saved levels for every output are removed. It will use your Default levels until you set new ones.") },
             confirmButton = {
-                TextButton(onClick = {
+                TextButton(onClick = tap {
                     confirmForget = false
                     scope.launch { AppGraph.profiles.forget(pkg) }
                     onBack()
                 }) { Text("Forget") }
             },
-            dismissButton = { TextButton(onClick = { confirmForget = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = tap { confirmForget = false }) { Text("Cancel") } },
         )
     }
 }

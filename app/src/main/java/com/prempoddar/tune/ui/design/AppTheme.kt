@@ -20,6 +20,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
+import com.prempoddar.tune.R
 
 /** How the app looks; every app saves one of these with its settings. */
 data class Appearance(
@@ -30,8 +38,47 @@ data class Appearance(
     val accent: Int? = null,
     /** Black backgrounds in dark mode. */
     val pureBlack: Boolean = false,
+    /** Softer, lighter dark mode with a hint of the accent ("dusk"); ignored with [pureBlack]. */
+    val dusk: Boolean = false,
+    val font: Font = Font.APP,
+    val palette: Palette = Palette.APP,
+    val contrast: Contrast = Contrast.STANDARD,
+    val corners: Corners = Corners.ROUND,
+    /** Tighter spacing to fit more on screen. */
+    val compact: Boolean = false,
+    val textSize: TextSize = TextSize.DEFAULT,
+    val haptics: Boolean = true,
 ) {
     enum class Mode { SYSTEM, LIGHT, DARK }
+    enum class Font(val label: String) { APP("App's own"), SYSTEM("System"), GROTESK("Grotesk"), ROUNDED("Rounded"), GEOMETRIC("Geometric"), SERIF("Serif") }
+    /** How colours are drawn from the accent. */
+    enum class Palette(val label: String) { APP("Faithful"), TONAL("Calm"), VIBRANT("Vibrant"), EXPRESSIVE("Playful"), MONO("Monochrome") }
+    enum class Contrast(val label: String, val level: Double) { STANDARD("Standard", 0.0), MEDIUM("Medium", 0.5), HIGH("High", 1.0) }
+    enum class Corners(val label: String, val scale: Float) { SHARP("Sharp", 0.4f), SOFT("Soft", 0.75f), ROUND("Round", 1f), PILL("Extra round", 1.4f) }
+    enum class TextSize(val label: String, val scale: Float) { SMALL("Small", 0.92f), DEFAULT("Default", 1f), LARGE("Large", 1.1f), HUGE("Huge", 1.22f) }
+
+    /** The settings added after the first four, as one line for an app's preferences. */
+    fun extras(): String = listOf(
+        "dusk=${if (dusk) 1 else 0}", "font=${font.name}", "palette=${palette.name}", "contrast=${contrast.name}",
+        "corners=${corners.name}", "compact=${if (compact) 1 else 0}", "text=${textSize.name}", "haptics=${if (haptics) 1 else 0}",
+    ).joinToString(";")
+
+    /** These settings with the extras saved by [extras] read back; unknown or missing ones keep their defaults. */
+    fun withExtras(line: String?): Appearance {
+        if (line.isNullOrBlank()) return this
+        val m = line.split(';').mapNotNull { p -> p.split('=', limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }.toMap()
+        fun <E : Enum<E>> pick(key: String, all: Array<E>, default: E) = m[key]?.let { v -> all.firstOrNull { it.name == v } } ?: default
+        return copy(
+            dusk = m["dusk"]?.let { it == "1" } ?: dusk,
+            font = pick("font", Font.entries.toTypedArray(), font),
+            palette = pick("palette", Palette.entries.toTypedArray(), palette),
+            contrast = pick("contrast", Contrast.entries.toTypedArray(), contrast),
+            corners = pick("corners", Corners.entries.toTypedArray(), corners),
+            compact = m["compact"]?.let { it == "1" } ?: compact,
+            textSize = pick("text", TextSize.entries.toTypedArray(), textSize),
+            haptics = m["haptics"]?.let { it == "1" } ?: haptics,
+        )
+    }
 }
 
 /** Accent choices offered in Appearance (RGB). */
@@ -52,13 +99,41 @@ fun isDark(a: Appearance) = when (a.mode) {
 }
 
 /** Rounder than default Material: friendly, touchable, Android 16-like. */
-val ExpressiveShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+val ExpressiveShapes = shapes(1f)
+
+/** The app's corner sizes, scaled for the chosen roundness. */
+fun shapes(scale: Float) = Shapes(
+    extraSmall = RoundedCornerShape(8.dp * scale),
+    small = RoundedCornerShape(12.dp * scale),
+    medium = RoundedCornerShape(20.dp * scale),
+    large = RoundedCornerShape(28.dp * scale),
+    extraLarge = RoundedCornerShape(32.dp * scale),
 )
+
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+private fun look(res: Int) = FontFamily(
+    listOf(400, 500, 600, 700).map { w -> androidx.compose.ui.text.font.Font(res, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w))) },
+)
+
+/** The family for a chosen font, or null for the app's own. */
+fun familyFor(font: Appearance.Font): FontFamily? = when (font) {
+    Appearance.Font.APP -> null
+    Appearance.Font.SYSTEM -> FontFamily.Default
+    Appearance.Font.GROTESK -> look(R.font.look_grotesk)
+    Appearance.Font.ROUNDED -> look(R.font.look_rounded)
+    Appearance.Font.GEOMETRIC -> look(R.font.look_geometric)
+    Appearance.Font.SERIF -> FontFamily.Serif
+}
+
+/** Every style in [t] set in [family]; monospaced text stays monospaced. */
+fun Typography.inFamily(family: FontFamily): Typography {
+    fun TextStyle.f() = if (fontFamily == FontFamily.Monospace) this else copy(fontFamily = family)
+    return Typography(
+        displayLarge.f(), displayMedium.f(), displaySmall.f(), headlineLarge.f(), headlineMedium.f(), headlineSmall.f(),
+        titleLarge.f(), titleMedium.f(), titleSmall.f(), bodyLarge.f(), bodyMedium.f(), bodySmall.f(),
+        labelLarge.f(), labelMedium.f(), labelSmall.f(),
+    )
+}
 
 /**
  * The app's theme: colours from the wallpaper, a chosen accent or the app's [brand] colour, in
@@ -69,10 +144,21 @@ fun AppTheme(appearance: Appearance, brand: Int, typography: Typography, content
     val dark = isDark(appearance)
     val context = LocalContext.current
     val scheme = remember(appearance, dark, brand) {
-        if (appearance.dynamic && dynamicColourSupported) {
-            val s = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            if (dark && appearance.pureBlack) blacken(s) else s
-        } else seedScheme(appearance.accent ?: brand, dark, appearance.pureBlack)
+        val s = if (appearance.dynamic && dynamicColourSupported) {
+            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        } else seedScheme(appearance.accent ?: brand, dark, false, appearance.palette, appearance.contrast.level)
+        when {
+            dark && appearance.pureBlack -> blacken(s)
+            dark && appearance.dusk -> dusken(s)
+            else -> s
+        }
+    }
+    val type = remember(typography, appearance.font) { familyFor(appearance.font)?.let { typography.inFamily(it) } ?: typography }
+    val shapeSet = remember(appearance.corners) { shapes(appearance.corners.scale) }
+    SideEffect { Haptics.enabled = appearance.haptics }
+    val density = LocalDensity.current
+    val looked = remember(density, appearance.compact, appearance.textSize) {
+        Density(density.density * (if (appearance.compact) 0.9f else 1f), density.fontScale * appearance.textSize.scale)
     }
     val activity = context as? Activity
     DisposableEffect(dark) {
@@ -83,8 +169,8 @@ fun AppTheme(appearance: Appearance, brand: Int, typography: Typography, content
         }
         onDispose { }
     }
-    CompositionLocalProvider(LocalAppearance provides appearance) {
-        MaterialTheme(colorScheme = scheme, typography = typography, shapes = ExpressiveShapes) {
+    CompositionLocalProvider(LocalAppearance provides appearance, LocalDensity provides looked) {
+        MaterialTheme(colorScheme = scheme, typography = type, shapes = shapeSet) {
             // Text and icons drawn outside a Surface would otherwise default to black, which
             // vanishes in dark mode. Give everything the theme's text colour by default.
             CompositionLocalProvider(LocalContentColor provides scheme.onSurface, content = content)

@@ -1,5 +1,7 @@
 package com.prempoddar.tune.ui.components
 
+import com.prempoddar.tune.ui.design.sliding
+import com.prempoddar.tune.ui.design.tap
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -85,7 +87,7 @@ fun PhoneVolumes(modifier: Modifier = Modifier) {
                 phoneStreams.forEachIndexed { i, s ->
                     if (i > 0) Spacer(Modifier.width(6.dp))
                     FilterChip(
-                        selected = i == selected, onClick = { selected = i },
+                        selected = i == selected, onClick = tap { selected = i },
                         label = { Text(s.label, maxLines = 1) },
                         leadingIcon = if (i == selected) { { Icon(s.icon, null, Modifier.padding(0.dp)) } } else null,
                         colors = FilterChipDefaults.filterChipColors(
@@ -102,7 +104,7 @@ fun PhoneVolumes(modifier: Modifier = Modifier) {
             Icon(stream.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Slider(
                 value = dragging ?: index.toFloat(),
-                onValueChange = { v ->
+                onValueChange = sliding(0f..1f) { v ->
                     dragging = v
                     val target = v.roundToInt().coerceIn(min, max)
                     if (target != index) {

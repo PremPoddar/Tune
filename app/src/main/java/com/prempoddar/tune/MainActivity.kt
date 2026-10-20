@@ -18,6 +18,7 @@ import com.prempoddar.tune.ui.theme.TuneTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.prempoddar.tune.ui.design.Haptics.attach(window.decorView)
         enableEdgeToEdge()
         setContent {
             // Null until settings load, so onboarding never flashes for returning users.

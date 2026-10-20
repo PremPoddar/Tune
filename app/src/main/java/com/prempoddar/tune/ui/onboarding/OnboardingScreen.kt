@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.onboarding
 
+import com.prempoddar.tune.ui.design.tap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prempoddar.tune.ui.design.BigButton
 import com.prempoddar.tune.ui.components.ShizukuCard
@@ -184,7 +185,7 @@ private fun StepPage(
                     modifier = Modifier.padding(top = 4.dp, end = 12.dp),
                 )
                 TextButton(
-                    onClick = { context.open(PermissionState.appInfoIntent(context)) },
+                    onClick = tap { context.open(PermissionState.appInfoIntent(context)) },
                     modifier = Modifier.align(Alignment.End),
                 ) { Text("Open App info") }
             }
@@ -248,7 +249,7 @@ fun AdbCommandCard(granted: Boolean, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                     modifier = Modifier.weight(1f).padding(top = 6.dp),
                 )
-                IconButton(onClick = {
+                IconButton(onClick = tap {
                     context.getSystemService(ClipboardManager::class.java)
                         .setPrimaryClip(ClipData.newPlainText("adb command", PermissionState.ADB_COMMAND))
                 }) { Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy command") }

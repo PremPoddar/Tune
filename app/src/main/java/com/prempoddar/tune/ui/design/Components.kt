@@ -48,7 +48,9 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -77,7 +79,7 @@ fun ExpressiveScaffold(
         topBar = {
             LargeTopAppBar(
                 title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = { if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
+                navigationIcon = { if (onBack != null) IconButton(onClick = tap(onBack)) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 actions = actions,
                 scrollBehavior = behavior,
                 colors = TopAppBarDefaults.largeTopAppBarColors(
@@ -116,11 +118,83 @@ fun SettingsGroup(title: String? = null, modifier: Modifier = Modifier, content:
     }
 }
 
-/** An icon in a soft rounded tile, the way settings rows show them. */
+/** An icon on a soft scalloped badge, the way settings rows show them. */
 @Composable
 fun IconTile(icon: ImageVector, modifier: Modifier = Modifier, container: Color = MaterialTheme.colorScheme.primaryContainer, tint: Color = MaterialTheme.colorScheme.onPrimaryContainer, size: Dp = 40.dp) {
-    Box(modifier.size(size).clip(RoundedCornerShape(size * 0.35f)).background(container), contentAlignment = Alignment.Center) {
-        Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.55f))
+    Box(modifier.size(size).clip(CookieShape).background(container), contentAlignment = Alignment.Center) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.52f))
+    }
+}
+
+/**
+ * A circle with gently scalloped edges, like a cookie or a flower: Material 3 Expressive's
+ * friendliest shape. [bumps] around the edge, each [depth] of the radius deep.
+ */
+class Scallop(private val bumps: Int = 9, private val depth: Float = 0.07f) : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density): androidx.compose.ui.graphics.Outline {
+        val path = androidx.compose.ui.graphics.Path()
+        val cx = size.width / 2; val cy = size.height / 2
+        val r = minOf(cx, cy) / (1 + depth)
+        val steps = bumps * 16
+        for (i in 0..steps) {
+            val a = (i.toDouble() / steps) * 2 * Math.PI
+            val rr = r * (1 + depth * kotlin.math.cos(bumps * a)).toFloat()
+            val x = cx + rr * kotlin.math.cos(a - Math.PI / 2).toFloat()
+            val y = cy + rr * kotlin.math.sin(a - Math.PI / 2).toFloat()
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        path.close()
+        return androidx.compose.ui.graphics.Outline.Generic(path)
+    }
+}
+
+val CookieShape = Scallop()
+
+/**
+ * A big two-line toggle, two to a row: filled with the accent when on. For the handful of
+ * settings people change most, at the top of a settings screen.
+ */
+@Composable
+fun QuickToggle(title: String, icon: ImageVector, checked: Boolean, modifier: Modifier = Modifier, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+    val s = MaterialTheme.colorScheme
+    val container by androidx.compose.animation.animateColorAsState(if (checked) s.primary else s.surfaceContainerHigh, label = "toggle")
+    val content by androidx.compose.animation.animateColorAsState(if (checked) s.onPrimary else s.onSurface, label = "toggleText")
+    Surface(
+        onClick = { Haptics.toggle(!checked); onChange(!checked) }, enabled = enabled,
+        shape = RoundedCornerShape(if (checked) 32.dp else 22.dp), color = container, contentColor = content,
+        modifier = modifier.heightIn(min = 76.dp).then(if (enabled) Modifier else Modifier.alpha(0.45f)),
+    ) {
+        Row(Modifier.padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Icon(icon, null, Modifier.size(22.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+                Text(if (checked) "On" else "Off", style = MaterialTheme.typography.bodySmall, color = content.copy(alpha = 0.75f))
+            }
+        }
+    }
+}
+
+/**
+ * A large tonal card that leads somewhere, with a scalloped icon badge and a soft shape in the
+ * corner: the "everything else" entries of a settings screen.
+ */
+@Composable
+fun FeatureCard(
+    title: String, summary: String?, icon: ImageVector, modifier: Modifier = Modifier,
+    container: Color = MaterialTheme.colorScheme.secondaryContainer, content: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+    footer: (@Composable () -> Unit)? = null, onClick: () -> Unit,
+) {
+    Surface(onClick = tap(onClick), shape = MaterialTheme.shapes.extraLarge, color = container, contentColor = content, modifier = modifier) {
+        Box {
+            Box(Modifier.align(Alignment.BottomEnd).padding(end = 0.dp).size(120.dp).alpha(0.18f).clip(Scallop(7, 0.12f)).background(content))
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                IconTile(icon, container = content.copy(alpha = 0.12f), tint = content, size = 44.dp)
+                Spacer(Modifier.size(6.dp))
+                Text(title, style = MaterialTheme.typography.headlineSmall)
+                if (summary != null) Text(summary, style = MaterialTheme.typography.bodyMedium, color = content.copy(alpha = 0.8f))
+                footer?.invoke()
+            }
+        }
     }
 }
 
@@ -137,7 +211,7 @@ fun SettingsRow(
     val alpha = if (enabled) 1f else 0.45f
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)
-            .then(if (onClick != null && enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null && enabled) Modifier.clickable(onClick = tap(onClick)) else Modifier)
             .heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -153,8 +227,20 @@ fun SettingsRow(
 
 @Composable
 fun SwitchRow(title: String, summary: String? = null, icon: ImageVector? = null, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
-    SettingsRow(title, summary, icon, enabled, onClick = { onChange(!checked) }) {
-        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)
+            .then(if (enabled) Modifier.clickable { Haptics.toggle(!checked); onChange(!checked) } else Modifier)
+            .heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        val alpha = if (enabled) 1f else 0.45f
+        if (icon != null) IconTile(icon)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+            if (summary != null) Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))
+        }
+        Switch(checked = checked, onCheckedChange = toggled(onChange), enabled = enabled)
     }
 }
 
@@ -175,6 +261,7 @@ fun PillTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailing: (@Composable () -> Unit)? = null,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
 ) {
     TextField(
         value = value, onValueChange = onValueChange, modifier = modifier.fillMaxWidth(), enabled = enabled,
@@ -185,7 +272,7 @@ fun PillTextField(
         trailingIcon = trailing ?: if (clearable && value.isNotEmpty() && enabled) {
             { IconButton(onClick = { onValueChange("") }) { Icon(Icons.Rounded.Cancel, "Clear") } }
         } else null,
-        keyboardOptions = keyboardOptions, keyboardActions = keyboardActions,
+        keyboardOptions = keyboardOptions, keyboardActions = keyboardActions, visualTransformation = visualTransformation,
         shape = RoundedCornerShape(20.dp),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -203,21 +290,21 @@ private val BigButtonHeight = 56.dp
 /** The main action on a screen: tall, rounded, impossible to miss. */
 @Composable
 fun BigButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, enabled: Boolean = true) {
-    Button(onClick, modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
+    Button(tap(onClick), modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
         ButtonContent(text, icon)
     }
 }
 
 @Composable
 fun TonalBigButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, enabled: Boolean = true) {
-    FilledTonalButton(onClick, modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
+    FilledTonalButton(tap(onClick), modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
         ButtonContent(text, icon)
     }
 }
 
 @Composable
 fun OutlinedBigButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, enabled: Boolean = true) {
-    OutlinedButton(onClick, modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
+    OutlinedButton(tap(onClick), modifier.defaultMinSize(minHeight = BigButtonHeight).fillMaxWidth(), enabled = enabled, shape = RoundedCornerShape(28.dp), contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)) {
         ButtonContent(text, icon)
     }
 }
@@ -235,7 +322,7 @@ fun <T> ChoiceChips(options: List<Pair<T, String>>, selected: T, onSelect: (T) -
         options.forEach { (value, label) ->
             val on = value == selected
             Surface(
-                onClick = { onSelect(value) }, shape = RoundedCornerShape(14.dp),
+                onClick = { if (!on) Haptics.select(); onSelect(value) }, shape = RoundedCornerShape(14.dp),
                 color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = if (on) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
@@ -260,7 +347,7 @@ fun EmptyState(icon: ImageVector, title: String, body: String? = null, modifier:
 @Composable
 fun TonalCard(modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.surfaceContainer, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     val shape = MaterialTheme.shapes.large
-    if (onClick != null) Surface(onClick = onClick, modifier = modifier, shape = shape, color = color) { Column(Modifier.padding(20.dp), content = content) }
+    if (onClick != null) Surface(onClick = tap(onClick), modifier = modifier, shape = shape, color = color) { Column(Modifier.padding(20.dp), content = content) }
     else Surface(modifier = modifier, shape = shape, color = color) { Column(Modifier.padding(20.dp), content = content) }
 }
 
@@ -270,7 +357,7 @@ fun Swatch(color: Color, selected: Boolean, label: String, onClick: () -> Unit) 
     Box(
         Modifier.size(48.dp).clip(CircleShape)
             .background(if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent)
-            .clickable(onClickLabel = label, onClick = onClick)
+            .clickable(onClickLabel = label, onClick = { if (!selected) Haptics.select(); onClick() })
             .padding(if (selected) 3.dp else 0.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
             .padding(if (selected) 3.dp else 0.dp).clip(CircleShape).background(color),
     )

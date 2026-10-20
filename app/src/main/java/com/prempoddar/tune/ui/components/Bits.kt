@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.components
 
+import com.prempoddar.tune.ui.design.tap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,7 +67,7 @@ fun Banner(
         Text(title, style = MaterialTheme.typography.titleMedium, color = fg)
         Text(body, style = MaterialTheme.typography.bodyMedium, color = fg.copy(alpha = 0.8f), modifier = Modifier.padding(end = 12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onAction) { Text(action, color = fg) }
+            TextButton(onClick = tap(onAction)) { Text(action, color = fg) }
         }
     }
 }

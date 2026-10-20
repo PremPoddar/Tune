@@ -30,6 +30,7 @@ class SettingsRepository(private val context: Context) {
         val dynamic = booleanPreferencesKey("dynamic")
         val accent = intPreferencesKey("accent")
         val black = booleanPreferencesKey("pure_black")
+        val look = stringPreferencesKey("look")
         val enabled = booleanPreferencesKey("enabled")
         val panel = booleanPreferencesKey("panel")
         val step = intPreferencesKey("step")
@@ -45,6 +46,7 @@ class SettingsRepository(private val context: Context) {
             p[Keys.theme] = next.appearance.mode.name
             p[Keys.dynamic] = next.appearance.dynamic
             p[Keys.black] = next.appearance.pureBlack
+            p[Keys.look] = next.appearance.extras()
             next.appearance.accent?.let { p[Keys.accent] = it } ?: p.remove(Keys.accent)
             p[Keys.enabled] = next.enabled
             p[Keys.panel] = next.panelEnabled
@@ -63,7 +65,7 @@ class SettingsRepository(private val context: Context) {
                 dynamic = this[Keys.dynamic] ?: false,
                 accent = this[Keys.accent],
                 pureBlack = this[Keys.black] ?: false,
-            ),
+            ).withExtras(this[Keys.look]),
             enabled = this[Keys.enabled] ?: d.enabled,
             panelEnabled = this[Keys.panel] ?: d.panelEnabled,
             stepPct = this[Keys.step] ?: d.stepPct,

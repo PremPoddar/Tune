@@ -1,5 +1,6 @@
 package com.prempoddar.tune.ui.components
 
+import com.prempoddar.tune.ui.design.tap
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,7 @@ fun RouteChips(
         routes.forEach { r ->
             FilterChip(
                 selected = r.key == selected,
-                onClick = { onSelect(r.key) },
+                onClick = tap { onSelect(r.key) },
                 label = { Text(if (r.key == current) "${r.name} · now" else r.name) },
                 leadingIcon = { Icon(routeIcon(r), contentDescription = null) },
             )
