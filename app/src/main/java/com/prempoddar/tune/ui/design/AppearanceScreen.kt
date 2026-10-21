@@ -5,6 +5,8 @@ package com.prempoddar.tune.ui.design
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.nativeCanvas
@@ -47,11 +49,10 @@ import androidx.compose.ui.unit.dp
 /** A library or font the app is built with, and its licence. */
 data class Credit(val name: String, val licence: String)
 
-/** Who makes the apps, and where to find them. The links are placeholders until those pages exist. */
+/** Who makes the apps, and where to find them: each app's code is at [GITHUB]/its name. */
 object Developer {
     const val NAME = "Prem Poddar"
-    const val GITHUB = "https://github.com/"
-    const val SITE = "https://example.com/"
+    const val GITHUB = "https://github.com/PremPoddar"
 }
 
 /** The launcher icon drawn from its two layers (adaptive icons and shape layers can't be painted directly). */
@@ -114,8 +115,10 @@ fun AboutScreen(
             }
             item {
                 SettingsGroup("Links") {
-                    SettingsRow("Source code", "GitHub", androidx.compose.material.icons.Icons.Rounded.Code, onClick = { open(Developer.GITHUB) })
-                    SettingsRow("Developer's site", Developer.SITE.removePrefix("https://").trimEnd('/'), androidx.compose.material.icons.Icons.Rounded.Language, onClick = { open(Developer.SITE) })
+                    val repo = "${Developer.GITHUB}/$appName"
+                    SettingsRow("Source code", repo.removePrefix("https://"), androidx.compose.material.icons.Icons.Rounded.Code, onClick = { open(repo) })
+                    SettingsRow("Report a problem", "Tell us what went wrong on GitHub", androidx.compose.material.icons.Icons.Rounded.BugReport, onClick = { open("$repo/issues") })
+                    SettingsRow("More apps by ${Developer.NAME}", Developer.GITHUB.removePrefix("https://"), androidx.compose.material.icons.Icons.Rounded.Apps, onClick = { open(Developer.GITHUB) })
                 }
             }
             if (notes.isNotEmpty()) item {
