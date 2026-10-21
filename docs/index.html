@@ -42,6 +42,11 @@
       <a href="https://github.com/PremPoddar/Tune" class="btn-ghost"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg> View the source</a>
     </div>
     <p class="micro fade-up d3">No root · no account · nothing leaves your phone</p>
+    <div class="play fade-up d3" id="play"><div class="play-head"><span class="play-title">Mix the band</span><span class="play-tag">drag the bars</span></div>
+<div class="tb-wrap">
+  <div class="tb-bars" id="tbBars"></div>
+  <div class="tb-side"><button class="play-btn" id="tbPlay">▶ Play the chord</button><p class="play-note" id="tbNote">Each bar is an app. Drag it up or down — that’s its own volume, and the others don’t budge.</p></div>
+</div></div>
   </div>
 </header>
 
@@ -139,6 +144,29 @@
 .tu-name{font-weight:800;font-size:15px}.tu-mode{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-left:8px}
 .tu-row input{width:100%;accent-color:var(--accent);margin-top:6px}
 .tu-pct{font:600 15px var(--mono);text-align:right;color:var(--accent-3)}
+
+.play{max-width:620px;margin:42px auto 0;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:20px 22px;position:relative;overflow:hidden}
+.play-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.play-title{font-family:var(--display);font-weight:700;font-size:1.05rem}
+.play-tag{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.play-note{font-size:.88rem;color:var(--muted);margin-top:10px}
+.play-btn{font:600 14px var(--body);color:var(--on-accent);background:linear-gradient(135deg,var(--accent),var(--accent-2));border:0;border-radius:999px;padding:10px 18px;cursor:pointer;transition:transform .15s}
+.play-btn:active{transform:scale(.95)}
+.play-btn.ghost{color:var(--text);background:var(--card-hover);border:1px solid var(--line)}
+
+.tb-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.tb-bars{display:flex;gap:16px;align-items:flex-end;height:170px;padding:10px 6px 0;touch-action:none}
+.tb-bar{width:54px;border-radius:27px;background:linear-gradient(180deg,#fff,#DCD6FF);position:relative;cursor:ns-resize;transition:height .08s;box-shadow:0 10px 24px -10px var(--accent-glow)}
+.tb-bar.dim{background:linear-gradient(180deg,#B7AEFF,#9586FF)}
+.tb-face{position:absolute;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.tb-eyes{display:flex;gap:10px}.tb-eyes i{width:6px;height:8px;border-radius:3px;background:#2a2357;animation:blink 4s infinite}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.tb-mouth{width:14px;height:7px;border-bottom:3px solid #2a2357;border-radius:0 0 10px 10px;transition:all .2s}
+.tb-bar.low .tb-mouth{height:2px;border-radius:2px;width:10px}
+.tb-bar.loud .tb-mouth{height:10px;width:16px;background:#2a2357;border-radius:0 0 12px 12px}
+.tb-lbl{position:absolute;bottom:-26px;left:-8px;right:-8px;text-align:center;font:600 11px var(--mono);color:var(--muted)}
+.tb-side{flex:1;min-width:210px}
+.tb-bars{margin-bottom:26px}
 </style>
 <script>
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
@@ -156,6 +184,20 @@ function draw(){tuOuts.innerHTML='';OUTS.forEach(o=>{const b=document.createElem
   r.innerHTML=`<div class="tu-ic" style="background:${c}22">${ic}</div><div><span class="tu-name">${n}</span><span class="tu-mode">${m}</span><input type="range" min="0" max="100" value="${lv[out][i]}"></div><div class="tu-pct">${lv[out][i]}%</div>`;
   const s=r.querySelector('input'),p=r.querySelector('.tu-pct');s.oninput=()=>{lv[out][i]=+s.value;p.textContent=s.value+'%'};tuRows.appendChild(r)})}
 draw();
+</script>
+<script>
+(()=>{const B=[['Bass',.5,130.81],['Voice',.85,164.81],['Synth',.3,196.0]];let ctx,nodes=[],playing=false;
+const bars=B.map(([n,v],i)=>{const d=document.createElement('div');d.className='tb-bar'+(i===1?'':' dim');d.innerHTML='<div class="tb-face"><div class="tb-eyes"><i></i><i></i></div><div class="tb-mouth"></div></div><div class="tb-lbl"></div>';tbBars.appendChild(d);return d});
+function draw(){bars.forEach((d,i)=>{const v=B[i][1];d.style.height=(36+v*124)+'px';d.classList.toggle('low',v<.25);d.classList.toggle('loud',v>.75);d.querySelector('.tb-lbl').textContent=`${B[i][0]} ${Math.round(v*100)}%`;
+ if(nodes[i])nodes[i].gain.setTargetAtTime(v*.18,ctx.currentTime,.03)})}
+bars.forEach((d,i)=>{d.addEventListener('pointerdown',e=>{try{d.setPointerCapture(e.pointerId)}catch(_){}const start=e.clientY,v0=B[i][1];
+ const mv=ev=>{B[i][1]=Math.min(1,Math.max(0,v0+(start-ev.clientY)/124));draw()};d.addEventListener('pointermove',mv);
+ d.addEventListener('pointerup',()=>d.removeEventListener('pointermove',mv),{once:true})})});
+tbPlay.onclick=()=>{if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();
+  nodes=B.map(([,v,f])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=0;o.connect(g).connect(ctx.destination);o.start();return g})}
+ playing=!playing;if(playing){ctx.resume();draw();tbPlay.textContent='■ Stop';tbNote.textContent='Now drag the bars and hear each one change on its own.'}
+ else{nodes.forEach(g=>g.gain.setTargetAtTime(0,ctx.currentTime,.05));tbPlay.textContent='▶ Play the chord'}};
+draw();})();
 </script>
 </body>
 </html>
