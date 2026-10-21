@@ -125,6 +125,11 @@ Spotify-like players announcing sessions.
 
 ## 🗂️ Project layout
 
+<p align="center"><img src=".github/assets/modules.png" alt="Tune source packages and what each one does" width="100%"></p>
+
+<details>
+<summary><strong>As text</strong></summary>
+
 ```
 app/src/main/java/com/prempoddar/tune/
     core/        pure Kotlin: volume maths, profile lookup, the mix planner, learning
@@ -134,6 +139,8 @@ app/src/main/java/com/prempoddar/tune/
     ui/          Compose screens, the volume panel overlay, theme
     widget/      Glance home screen widget
 ```
+
+</details>
 
 ## 📄 License
 
