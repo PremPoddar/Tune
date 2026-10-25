@@ -1,9 +1,20 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Release signing is read from a git-ignored keystore.properties (see keystore.properties.sample).
+// Until it's filled in, release builds are signed with the debug key so they still install.
+val keystoreProps = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.let { f -> FileInputStream(f).use { load(it) } }
+}
+val hasReleaseKeystore = keystoreProps.getProperty("storeFile")?.let { file(it).exists() } == true &&
+    keystoreProps.getProperty("storePassword").let { !it.isNullOrBlank() && it != "CHANGE_ME" }
 
 android {
     namespace = "com.prempoddar.tune"
@@ -17,6 +28,17 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseKeystore) {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -25,8 +47,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug-signed until a release keystore is set up, so release builds still install.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKeystore) "release" else "debug")
         }
         // Optimised like release but without shrinking, for trying builds on a phone: as fast
         // as release, and nothing can be stripped by mistake.
