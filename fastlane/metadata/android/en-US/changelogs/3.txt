@@ -1,0 +1,1 @@
+• Built reproducibly, so the F-Droid and GitHub versions are the same app with the same signature, and you can update from either.
