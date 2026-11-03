@@ -1,0 +1,1 @@
+Per-app volume mixer: each app plays at its own level. No root

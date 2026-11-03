@@ -1,0 +1,13 @@
+<p><b>A per-app volume mixer for Android. No root.</b></p>
+<p>Turn YouTube up and Spotify down, and Tune remembers. Switch apps and each one comes back at its own level. Put a podcast on over quiet background music and both play at once, each at the volume you gave it, separately for the speaker, your headphones and every Bluetooth device.</p>
+<ul>
+<li><b>Per-app levels</b> for media, ring, notification and alarm volume.</li>
+<li><b>Real mixing:</b> music players that share their audio play side by side at different levels.</li>
+<li><b>Learns as you go:</b> whatever volume you leave an app at becomes its level.</li>
+<li><b>Per output:</b> separate levels for the speaker, wired headphones and each Bluetooth device.</li>
+<li><b>Pin</b> an app at fixed levels.</li>
+<li><b>Volume panel</b> that moves the app you're using.</li>
+<li><b>Quick Settings tile and widget.</b></li>
+<li><b>Appearance:</b> light, dark, dusk or OLED black, Material You, fonts, shapes and haptics.</li>
+</ul>
+<p>Tune uses an accessibility service to see which app is in front. With Shizuku running, it can set every app's level exactly; without it, it mixes where apps allow and switches the media volume otherwise.</p>

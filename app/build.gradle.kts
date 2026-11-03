@@ -47,7 +47,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName(if (hasReleaseKeystore) "release" else "debug")
+            // Signed with the upload key when keystore.properties is there; otherwise left unsigned,
+            // for builders such as F-Droid that sign with their own key.
+            if (hasReleaseKeystore) signingConfig = signingConfigs.getByName("release")
         }
         // Optimised like release but without shrinking, for trying builds on a phone: as fast
         // as release, and nothing can be stripped by mistake.
