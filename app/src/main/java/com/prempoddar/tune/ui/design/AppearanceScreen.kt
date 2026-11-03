@@ -7,6 +7,7 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.nativeCanvas
@@ -53,6 +54,8 @@ data class Credit(val name: String, val licence: String)
 object Developer {
     const val NAME = "Prem Poddar"
     const val GITHUB = "https://github.com/PremPoddar"
+    const val WEBSITE = "https://prempoddar.is-a.dev"
+    const val EMAIL = "prempoddar@yandex.com"
 }
 
 /** The launcher icon drawn from its two layers (adaptive icons and shape layers can't be painted directly). */
@@ -119,6 +122,8 @@ fun AboutScreen(
                     SettingsRow("Source code", repo.removePrefix("https://"), androidx.compose.material.icons.Icons.Rounded.Code, onClick = { open(repo) })
                     SettingsRow("Report a problem", "Tell us what went wrong on GitHub", androidx.compose.material.icons.Icons.Rounded.BugReport, onClick = { open("$repo/issues") })
                     SettingsRow("More apps by ${Developer.NAME}", Developer.GITHUB.removePrefix("https://"), androidx.compose.material.icons.Icons.Rounded.Apps, onClick = { open(Developer.GITHUB) })
+                    SettingsRow("Website", Developer.WEBSITE.removePrefix("https://"), androidx.compose.material.icons.Icons.Rounded.Language, onClick = { open(Developer.WEBSITE) })
+                    SettingsRow("Contact me", Developer.EMAIL, androidx.compose.material.icons.Icons.Rounded.Email, onClick = { open("mailto:${Developer.EMAIL}") })
                 }
             }
             if (notes.isNotEmpty()) item {
