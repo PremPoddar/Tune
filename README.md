@@ -11,7 +11,7 @@
 [![Website](https://img.shields.io/badge/Website-prempoddar.github.io%2FTune-9586FF)](https://prempoddar.github.io/Tune/)
 [![Latest release](https://img.shields.io/github/v/release/PremPoddar/Tune?label=Download&logo=android&logoColor=white&color=9586FF)](https://github.com/PremPoddar/Tune/releases/latest)
 
-**[Website](https://prempoddar.github.io/Tune/)** · **[Download APK](https://github.com/PremPoddar/Tune/releases/latest)** · **[Privacy](https://prempoddar.github.io/Tune/privacy/)** · **[Report a problem](https://github.com/PremPoddar/Tune/issues)**
+**[Website](https://prempoddar.github.io/Tune/)** · **[Download APK](https://github.com/PremPoddar/Tune/releases/latest)** · **[F-Droid repo](https://prempoddar.github.io/fdroid/repo?fingerprint=B22CDB8846EA991100C5D8DD2CBB893AF2C51B72406210B94B9F8C9B539E8BF6)** · **[Privacy](https://prempoddar.github.io/Tune/privacy/)** · **[Report a problem](https://github.com/PremPoddar/Tune/issues)**
 
 </div>
 
