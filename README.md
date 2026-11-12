@@ -8,10 +8,10 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
-[![Website](https://img.shields.io/badge/Website-prempoddar.github.io%2FTune-9586FF)](https://prempoddar.github.io/Tune/)
+[![Website](https://img.shields.io/badge/Website-prempoddar.is-a.dev%2FTune-9586FF)](https://prempoddar.is-a.dev/Tune/)
 [![Latest release](https://img.shields.io/github/v/release/PremPoddar/Tune?label=Download&logo=android&logoColor=white&color=9586FF)](https://github.com/PremPoddar/Tune/releases/latest)
 
-**[Website](https://prempoddar.github.io/Tune/)** · **[Download APK](https://github.com/PremPoddar/Tune/releases/latest)** · **[F-Droid repo](https://prempoddar.github.io/fdroid/repo?fingerprint=B22CDB8846EA991100C5D8DD2CBB893AF2C51B72406210B94B9F8C9B539E8BF6)** · **[Privacy](https://prempoddar.github.io/Tune/privacy/)** · **[Report a problem](https://github.com/PremPoddar/Tune/issues)**
+**[Website](https://prempoddar.is-a.dev/Tune/)** · **[Download APK](https://github.com/PremPoddar/Tune/releases/latest)** · **[F-Droid repo](https://prempoddar.is-a.dev/fdroid/repo?fingerprint=B22CDB8846EA991100C5D8DD2CBB893AF2C51B72406210B94B9F8C9B539E8BF6)** · **[Privacy](https://prempoddar.is-a.dev/Tune/privacy/)** · **[Report a problem](https://github.com/PremPoddar/Tune/issues)**
 
 </div>
 
@@ -108,7 +108,7 @@ On Android 13 and newer, apps installed outside the Play Store must be allowed u
 can be turned on. Onboarding walks through this.
 
 **Nothing leaves the phone: Tune has no internet permission.** Full policy:
-**[prempoddar.github.io/Tune/privacy](https://prempoddar.github.io/Tune/privacy/)**.
+**[prempoddar.is-a.dev/Tune/privacy](https://prempoddar.is-a.dev/Tune/privacy/)**.
 
 ## 🛠️ Building and testing
 
